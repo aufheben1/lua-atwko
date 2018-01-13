@@ -55,10 +55,7 @@ function hSleep(t)
     usleep(t)
 end
 function sleepSec(t)
-    hSleep(t * 1100000)
-    for i = 1, targetCount do
-        delayList[i] = delayList[i] - t
-    end
+    hSleep(t * 1000000)
 end
 function sleepMin(t)
     hSleep(t * 60000000)
@@ -124,15 +121,15 @@ end
 --os.difftime(t2, t1)
 
 --Initialize
-delayList = {}
 targetCount = tableLength(targetList)
 delayedBefore = {}
+restartTime = {}
 loginedTarget = 0
 targetNum = 0
 
 for i = 1, targetCount do
-    delayList[i] = 0
     delayedBefore[i] = false
+    restartTime[i] = os.time()
 end
 appKill("com.digitalcloud.otwko")
 sleepSec(1)
@@ -140,29 +137,36 @@ sleepSec(1)
 --loop
 while true do
     
-    --find which target to start
-    minn = 1
-    for i = 1, targetCount do
-        if delayList[i] <= 0 and delayList[i] < minn then
-            if i <= fullCount then
-            	targetNum = i
-            	minn = delayList[i]
-            else
-                if fullTime() then
-                	targetNum = i
-                	minn = delayList[i]
-                end
-            end
+    --wait until target time
+    while true do
+      --find minimum target time
+      minTargetTime = restartTime[1]
+      targetNum = 1
+      for i = 1, targetCount do
+        if restartTime[i] < minTargetTime then
+          minTargetTime = restartTime[i]
+          targetNum = i
         end
+      end
+      
+      log("minTargetTime: " .. minTargetTime .. "/ osTime: " .. os.time())
+      if os.time() > minTargetTime then
+        log("break")
+        break
+      else
+        log("wait")
+        usleep(1000000) --wait 1 second
+      end
     end
-    
+        
     --state machine for target
     appRun("com.digitalcloud.otwko")
     state = 0
     stateCount = 0
     prevState = 0
     touchCount = 0
-        
+    
+    --state machine loop
     while true do
         --from any state
         if state ~= prevState then	--state 변경시 이전 state 저장
@@ -171,13 +175,13 @@ while true do
         end
         stateCount = stateCount + 1	--state가 변경되지 않는 시간을 카운트
         if stateCount > (20/smWaitTime) then        --state doesn't move for 20 sec
-            delayList[targetNum] = 120   --wait for 2 minute
+            restartTime[targetNum] = os.time() + 120  --wait for 2 minute
             break
         end
         
         --다른 기기에서 접속했을 시, 15분 대기
         if ggetColor(272,503) == 13668970 and ggetColor(220, 40) ==14594953 and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
-            delayList[targetNum] = 900  --wait for 15 minute
+            restartTime[targetNum] = os.time() + 900 --wait for 15 minute
             delayedBefore[targetNum] = false
             break
         end
@@ -300,7 +304,7 @@ while true do
                 sleepSec(2)
                 --if ggetColor(188, 407) == 15584313 then --enchant button touchable
                 if ggetColor(238, 441) == 11045167 then  --enchant boost window
-                    delayList[targetNum] = 120  --wait for 2 minute
+                    restartTime[targetNum] = os.time() + 120  --wait for 2 minute
                     break
                 else
                     delayedBefore[targetNum] = true
@@ -311,7 +315,7 @@ while true do
                     touch(188, 407)
                 end
                 if ggetColor(238, 441) == 11045167 then  --enchant boost window
-                    delayList[targetNum] = 900  --wait for 15 minute
+                    restartTime[targetNum] = os.time() + 900  --wait for 15 minute
                     break
                 end
             end
@@ -354,27 +358,8 @@ while true do
         end
     end
     
-    --decide how much to wait
-    SetWifi()
+    
     appKill("com.digitalcloud.otwko")
-    minTime = 60 * 15
-    sleepSec(1.0)
-    SetWifi()
+    sleepSec(1)
     
-    countTo = fullCount
-    if fullTime() then
-        countTo=targetCount
-    end
-    for i = 1, countTo do
-        if delayList[i] < minTime then
-            minTime = delayList[i]
-        end
-    end
-    
-    --wait
-    if minTime > 0 then
-        sleepLong(minTime)
-    else
-        sleepSec(1)
-    end
 end
