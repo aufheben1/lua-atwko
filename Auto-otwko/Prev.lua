@@ -14,12 +14,13 @@ tag-> 1=투구, 2=갑옷, 3=무기, 4=탈것, 5=보물, 6=장신구
 count-> 해당 tag창에 들어가서 몇번째 순서인지
 ]]--
 itemList = {
-    {tag = 6, count = 6}   --소닉
+    {tag = 6, count = 5}   --소닉
     ,{tag = 6, count = 8}   --가민
-  	,{tag = 6, count = 5}	--별길
-  	,{tag = 6, count = 1}	--냄새
+  	,{tag = 6, count = 4}	--별길
+  	,{tag = 1, count = 2}	--냄새
 }
 
+nameList = {"소닉", "가민", "별길", "냄새"}
 
 function sleepLong(timer)  
   for i = 1, timer do
@@ -30,17 +31,6 @@ end
 function ggetColor(x,y)
     return getColor(x*2, y*2)
 end
-
-wifiOn = true
-
-function SetWifi()
-	wifiOn = not wifiOn
-	keyDown(KEY_TYPE.VOLUME_UP_BUTTON);
-	sleepSec(1.0)
-	keyUp(KEY_TYPE.VOLUME_UP_BUTTON);
-	sleepSec(0.5)
-end
-
 
 jingsu = true   --true 일시 08시~16시 사이에 주성에 들어가서 징수버튼을 누른다, 하시 싫으면 false
 
@@ -118,18 +108,32 @@ function fullTime()
     end
 end
 
---os.difftime(t2, t1)
+
+function writeTime(index, time)
+  local file = io.open(rootDir().."Tmp/"..nameList[index]..".tmp", "w")
+  file:write(time)
+  file:close()
+end
 
 --Initialize
 targetCount = tableLength(targetList)
-delayedBefore = {}
 restartTime = {}
 loginedTarget = 0
 targetNum = 0
 
 for i = 1, targetCount do
-    delayedBefore[i] = false
-    restartTime[i] = os.time()
+    file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "r")
+    if file == nil then
+      --파일이 없을 경우 새로 생성
+      file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "w+")
+      file:write(os.time())
+      file:close()
+      restartTime[i] = os.time()
+    else
+      --파일이 있을경우 읽어옴
+      restartTime[i] = tonumber(file:read())
+      file:close()
+    end
 end
 appKill("com.digitalcloud.otwko")
 sleepSec(1)
@@ -149,7 +153,6 @@ while true do
         end
       end
       
-      log("minTargetTime: " .. minTargetTime .. "/ osTime: " .. os.time())
       if os.time() > minTargetTime then
         log("break")
         break
@@ -176,13 +179,14 @@ while true do
         stateCount = stateCount + 1	--state가 변경되지 않는 시간을 카운트
         if stateCount > (20/smWaitTime) then        --state doesn't move for 20 sec
             restartTime[targetNum] = os.time() + 120  --wait for 2 minute
+            writeTime(targetNum, os.time() + 120)
             break
         end
         
         --다른 기기에서 접속했을 시, 15분 대기
         if ggetColor(272,503) == 13668970 and ggetColor(220, 40) ==14594953 and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
             restartTime[targetNum] = os.time() + 900 --wait for 15 minute
-            delayedBefore[targetNum] = false
+            writeTime(targetNum, os.time() + 900)
             break
         end
 
@@ -296,28 +300,14 @@ while true do
             end
             sleepSec(smWaitTime)
         elseif state == 7 then  --enchant window;item selected
-            if delayedBefore[targetNum] == false then
-                --if ggetColor(188, 407) == 15584313 then --enchant button touchable
-                if ggetColor(188, 407) == 15518777 then --enchant button touchable
-                    touch(188, 407)
-                end
-                sleepSec(2)
-                --if ggetColor(188, 407) == 15584313 then --enchant button touchable
-                if ggetColor(238, 441) == 11045167 then  --enchant boost window
-                    restartTime[targetNum] = os.time() + 120  --wait for 2 minute
-                    break
-                else
-                    delayedBefore[targetNum] = true
-                end
-            else
-                --if ggetColor(188, 407) == 15584313 then --enchant button touchable
-                if ggetColor(188, 407) == 15518777 then --enchant button touchable
-                    touch(188, 407)
-                end
-                if ggetColor(238, 441) == 11045167 then  --enchant boost window
-                    restartTime[targetNum] = os.time() + 900  --wait for 15 minute
-                    break
-                end
+            --if ggetColor(188, 407) == 15584313 then --enchant button touchable
+            if ggetColor(188, 407) == 15518777 then --enchant button touchable
+                touch(188, 407)
+            end
+            if ggetColor(238, 441) == 11045167 then  --enchant boost window
+                restartTime[targetNum] = os.time() + 900  --wait for 15 minute
+                writeTime(targetNum, os.time() + 900)
+                break
             end
             sleepSec(0.4)
         elseif state == 8 then  --게임 접속, 태학원으로

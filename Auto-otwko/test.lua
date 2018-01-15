@@ -1,10 +1,13 @@
-function tableLength(T)
-    local count = 0
-    if T == nil then return count end
-    for _ in pairs(T) do count = count + 1 end
-    return count
+
+file = io.open("./Tmp/test.tmp", "r")
+
+io.input(file)
+
+a = io.read()
+--print(io.read())
+
+for i = 1, a do
+  print("hello")
 end
 
-local t = nil
-
-print(tableLength(t))
+io.close()
