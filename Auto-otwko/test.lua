@@ -1,13 +1,14 @@
-
-file = io.open("./Tmp/test.tmp", "r")
-
-io.input(file)
-
-a = io.read()
---print(io.read())
-
-for i = 1, a do
-  print("hello")
+function touch(x,y)
+    print(x)
+    print(y)
 end
 
-io.close()
+function touch(table)
+  print(table[1])
+  print(table[2])
+  touch(table[1], table[2])
+  --touch(table[1], table[2])
+end
+
+print("HI")
+touch({1,5})
