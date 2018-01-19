@@ -6,6 +6,12 @@ dofile(rootDir() .. "Include/Utils.lua")
 
 smWaitTime = 0.2
 
+--Initialize
+targetCount = tableLength(targetList)
+restartTime = {}
+lastCubineTime = {}
+loginedTarget = 0
+targetNum = 0
 
 function fullTime()
     now = os.date("*t", os.time())
@@ -17,29 +23,26 @@ function fullTime()
     end
 end
 
-function writeTime(index, time)
+function writeFile(index)
   local file = io.open(rootDir().."Tmp/"..nameList[index]..".tmp", "w")
-  file:write(time)
+  file:write(restartTime[index] .. "\n")
+  file:write(lastCubineTime[index])
   file:close()
 end
-
---Initialize
-targetCount = tableLength(targetList)
-restartTime = {}
-loginedTarget = 0
-targetNum = 0
 
 for i = 1, targetCount do
     file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "r")
     if file == nil then
       --파일이 없을 경우 새로 생성
       file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "w+")
-      file:write(os.time())
+      file:write(os.time() .. "\n")
+      file:write("-1")
       file:close()
       restartTime[i] = os.time()
     else
       --파일이 있을경우 읽어옴
       restartTime[i] = tonumber(file:read())
+      lastCubineTime[i] = tonumber(file:read())
       file:close()
     end
 end
@@ -85,7 +88,7 @@ while true do
         if stateCount > (20/smWaitTime) then        --state doesn't move for 20 sec
           log("state 변경 안됨")
             restartTime[targetNum] = os.time() + 120  --wait for 2 minute
-            writeTime(targetNum, os.time() + 120)
+            writeFile(targetNum)
             break
         end
         
@@ -94,7 +97,7 @@ while true do
             log(state)
             log("access from other device")
             restartTime[targetNum] = os.time() + 900 --wait for 15 minute
-            writeTime(targetNum, os.time() + 900)
+            writeFile(targetNum)
             break
         end
 
@@ -178,8 +181,17 @@ while true do
             --//add function to stop when server check
             --//add function to close windows on first access of day        
             if getColor(94, 1080) == 16773152 then --option button
+              now = os.date("*t", os.time())
+              hh = now["hour"]
+            
+              if (hh % 8 == 0) and (hh ~= lastCubineTime[targetNum]) then --후궁을 해야할 경우
+                touch(327, 1132)   --후궁 버튼
+                state = 11
+              else
                 touch(94, 1080)
                 state = 5
+              end
+              
             end
             sleepSec(smWaitTime)
         elseif state == 5 then  --option window
@@ -209,7 +221,7 @@ while true do
             end
             if getColor(476, 882) == 11045167 then  --enchant boost window
                 restartTime[targetNum] = os.time() + 900  --wait for 15 minute
-                writeTime(targetNum, os.time() + 900)
+                writeFile(targetNum)
                 break
             end
             sleepSec(0.4)
@@ -246,6 +258,22 @@ while true do
         	touch(610,960)
         	state = 4
             sleepSec(smWaitTime)
+        elseif state == 11 then --후궁 창
+          sleepSec(2.0)
+          touch(56, 636)
+          sleepSec(1.0)
+          touch(182, 691)
+          sleepSec(1.0)
+          touch(590, 987)
+          sleepSec(0.5)
+          
+          now = os.date("*t", os.time())
+          hh = now["hour"]
+          lastCubineTime[targetNum] = hh
+          writeFile(targetNum)
+          
+          state = 4
+          sleepSec(smWaitTime)
         else
             break
         end

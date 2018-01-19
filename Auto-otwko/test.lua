@@ -1,14 +1,11 @@
-function touch(x,y)
-    print(x)
-    print(y)
-end
 
-function touch(table)
-  print(table[1])
-  print(table[2])
-  touch(table[1], table[2])
-  --touch(table[1], table[2])
-end
+file = io.open("Tmp/test.tmp", "w")
 
-print("HI")
-touch({1,5})
+file:write("1\n")
+file:write("2")
+file:close()
+
+file = io.open("Tmp/test.tmp", "r")
+print(file:read())
+print(file:read())
+print(file:read())
