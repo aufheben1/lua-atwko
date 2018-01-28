@@ -20,3 +20,24 @@ itemList = {
 오토 돌리는 계정의 별칭 목록
 ]]--
 nameList = {"소닉", "가민", "별길", "냄새"}
+
+--[[
+테스트중, 군단 여부
+]]--
+corpMode ={true, false, false, false}
+
+setting = 
+{
+  {
+    tag = "소닉",
+    account = {id = "sonichk@naver.com", pw = "a", server = 3},
+    item = {itemType = 6, itemIndex = 5},
+    extras = {school = true, cubine = true}
+  },
+  {
+    tag = "가민",
+    account = {id = "sonichk@naver.com", pw = "a", server = 3},
+    item = {itemType = 6, itemIndex = 5},
+    extras = {school = true, cubine = true}
+  }
+}

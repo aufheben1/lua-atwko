@@ -10,6 +10,7 @@ smWaitTime = 0.2
 targetCount = tableLength(targetList)
 restartTime = {}
 lastCubineTime = {}
+lastCorpTime = {}
 loginedTarget = 0
 targetNum = 0
 
@@ -26,7 +27,8 @@ end
 function writeFile(index)
   local file = io.open(rootDir().."Tmp/"..nameList[index]..".tmp", "w")
   file:write(restartTime[index] .. "\n")
-  file:write(lastCubineTime[index])
+  file:write(lastCubineTime[index] .. "\n")
+  file:write(lastCorpTime[index])
   file:close()
 end
 
@@ -36,13 +38,17 @@ for i = 1, targetCount do
       --파일이 없을 경우 새로 생성
       file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "w+")
       file:write(os.time() .. "\n")
+      file:write("-1\n")
       file:write("-1")
       file:close()
       restartTime[i] = os.time()
+      lastCubineTime[i] = -1
+      lastCorpTime[i] = -1
     else
       --파일이 있을경우 읽어옴
       restartTime[i] = tonumber(file:read())
       lastCubineTime[i] = tonumber(file:read())
+      lastCorpTime[i] = tonumber(file:read())
       file:close()
     end
 end
@@ -76,6 +82,7 @@ while true do
     state = 0
     stateCount = 0
     prevState = 0
+    corpTryCount = 0
         
     --state machine loop
     while true do
@@ -222,7 +229,18 @@ while true do
             if getColor(476, 882) == 11045167 then  --enchant boost window
                 restartTime[targetNum] = os.time() + 900  --wait for 15 minute
                 writeFile(targetNum)
-                break
+                --★
+                now = os.date("*t", os.time())
+                hh = now["hour"]
+                if corpMode[targetNum] == true and hh ~= lastCorpTime[targetNum] then
+                  touch(412, 913)
+                  sleepSec(0.5)
+                  touch(605,970)
+                  sleepSec(0.2)
+                  state = 13
+                else
+                  break
+                end
             end
             sleepSec(0.4)
         elseif state == 8 then  --게임 접속, 태학원으로
@@ -274,6 +292,63 @@ while true do
           
           state = 4
           sleepSec(smWaitTime)
+        elseif state == 12 then --다시 기능창 누르고 군단전으로
+          if getColor(94, 1080) == 16773152 then --option button
+            touch(94, 1080)
+            state = 13
+          end
+          sleepSec(smWaitTime)
+        elseif state == 13 then --기능창에서 강화버튼이 보이면 군단전버튼 누르기
+          --if getColor(350, 826) == 6105858 then   --enchant button
+          if getColor(425, 881) == 16643992 then
+            touch(431, 876)
+            corpTryCount = 0
+            state = 14
+          end
+          sleepSec(smWaitTime)
+        elseif state == 14 then --군단전 화면, 바닥 초록색타일 확인 후 원하는 군단 버튼 누르기
+          if corpTryCount >= 20 then
+            now = os.date("*t", os.time())
+            hh = now["hour"]
+            lastCorpTime[targetNum] = hh
+            writeFile(targetNum)
+            break
+          elseif getColor(210, 433) == 7701540 then
+            touch(213, 685) --일단은 테스트용, 두건덕 좌표
+            state = 15
+          end
+          sleepSec(smWaitTime)
+        elseif state == 15 then --집결버튼 뜨면 누르기
+          if getColor(115, 839) == 12761010 then
+            touch(115, 839)
+            state = 16
+          end
+          sleepSec(smWaitTime)        
+        elseif state == 16 then --공격버튼 뜨면 누르기, 만약 군단 끝났을 경우 시간 기록 후 break
+          if getColor(122, 888) == 131592 then
+            touch(122, 888)
+            state = 17
+          elseif getColor(438, 920) == 65792 then
+            now = os.date("*t", os.time())
+            hh = now["hour"]
+            lastCorpTime[targetNum] = hh
+            writeFile(targetNum)
+            break
+          end
+          sleepSec(smWaitTime)        
+        elseif state == 17 then --결과 버튼 누르기, 군단 카운트 증가
+          if getColor(37, 1029) == 6117236 then
+            touch(37, 1029)
+            corpTryCount = corpTryCount + 1
+            state = 18
+          end
+          sleepSec(smWaitTime)     
+        elseif state == 18 then --돌아가기 버튼 누르기, 상태는 14번으로
+          if getColor(32, 865) == 9225796 then
+            touch(32, 865)
+            state = 14
+          end
+          sleepSec(smWaitTime)        
         else
             break
         end
