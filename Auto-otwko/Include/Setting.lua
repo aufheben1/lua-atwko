@@ -25,7 +25,7 @@ corpMode ={true, true, true, false}
 
 corpTarget = {1, 2, 3, 0} --양광, 두건덕, 두복위
 
-setting = 
+targets = 
 {
   {
     tag = "소닉",
@@ -36,9 +36,11 @@ setting =
     jujang = {hour = 4}
   },
   {
-    tag = "가민",
-    account = {id = "sonichk@naver.com", pw = "a", server = 3},
-    item = {itemType = 6, itemIndex = 5},
-    extras = {school = true, cubine = true}
+    tag = "종성",
+    account = {id = "75j-s@hanmail.net", pw = "123456", server = 3},
+    item = {itemType = 6, itemIndex = 10},
+    extras = {school = true, cubine = true, corp = true, hwangsung = true},
+    corp = {timeType = 2, target = 2},   --timeType: 1=모든시간, 2=홀수시간, 3=짝수시간 / target: 1=양광, 2=두건덕, 3=두복위
+    jujang = {hour = 4}
   }
 }

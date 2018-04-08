@@ -31,6 +31,18 @@ function touchItem(itemIndex)
   touch(touchList[itemIndex][1], touchList[itemIndex][2])
 end
 
+function isCorpTime(tType, hour)
+  if tType == 1 then 
+    return true 
+  elseif tType == 2 then
+    return hour % 2 == 1
+  elseif tType == 3 then
+    return hour % 2 == 0
+  else 
+    return false
+  end
+end
+
 
 targetPosition = {{x = 111, y = 220, z = 0}, {x = 138, y = 518, z = 0},{x = 149, y = 439, z = 1}, 	--동탁
 						{x = 214, y = 464, z = 0}, {x = 223, y = 162, z = 0}, {x = 150, y = 318, z = 0}, 	--원술
