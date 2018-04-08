@@ -11,6 +11,8 @@ targetCount = tableLength(targetList)
 restartTime = {}
 lastCubineTime = {}
 lastCorpTime = {}
+lastHwangsungDay = {}
+lastJujangDay = {}
 loginedTarget = 0
 targetNum = 0
 
@@ -28,9 +30,18 @@ function writeFile(index)
   local file = io.open(rootDir().."Tmp/"..nameList[index]..".tmp", "w")
   file:write(restartTime[index] .. "\n")
   file:write(lastCubineTime[index] .. "\n")
-  file:write(lastCorpTime[index])
+  file:write(lastCorpTime[index].. "\n")
+  file:write(lastHwangsungDay[index].. "\n")
+  file:write(lastJujangDay[index])
   file:close()
 end
+
+
+function touchCorp(targetNum)
+  local touchList = {{322, 569}, {213, 685}, {152, 851}, {176, 987}}
+  touch(touchList[targetNum][1], touchList[targetNum][2])
+end
+
 
 for i = 1, targetCount do
     file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "r")
@@ -39,21 +50,30 @@ for i = 1, targetCount do
       file = io.open(rootDir().."Tmp/"..nameList[i]..".tmp", "w+")
       file:write(os.time() .. "\n")
       file:write("-1\n")
-      file:write("-1")
+      file:write("-1\n")
+      file:write("-1\n")
       file:close()
       restartTime[i] = os.time()
       lastCubineTime[i] = -1
       lastCorpTime[i] = -1
+      lastHwangsungDay[i] = -1
+      lastJujangDay[i] = -1
     else
       --파일이 있을경우 읽어옴
       restartTime[i] = tonumber(file:read())
       lastCubineTime[i] = tonumber(file:read())
       lastCorpTime[i] = tonumber(file:read())
+      lastHwangsungDay[i] = tonumber(file:read())
+      lastJujangDay[i] = tonumber(file:read())
       file:close()
     end
 end
 appKill("com.digitalcloud.otwko")
 sleepSec(1)
+
+currentJJCount = 1
+mapColor = 0
+dragCount = 1
 
 --loop
 while true do
@@ -100,7 +120,7 @@ while true do
         end
         
         --다른 기기에서 접속했을 시, 15분 대기
-        if getColor(544,1006) == 13668970 and getColor(440, 80) ==14594953 and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
+        if getColor(544,1006) == 6965814 and getColor(440, 80) ==7428934 and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
             log(state)
             log("access from other device")
             restartTime[targetNum] = os.time() + 900 --wait for 15 minute
@@ -190,10 +210,14 @@ while true do
             if getColor(94, 1080) == 16773152 then --option button
               now = os.date("*t", os.time())
               hh = now["hour"]
+              dd = now["day"]
             
               if (hh % 8 == 0) and (hh ~= lastCubineTime[targetNum]) then --후궁을 해야할 경우
                 touch(327, 1132)   --후궁 버튼
                 state = 11
+              elseif hh == 4 and dd ~= lastJujangDay[targetNum] then  -- 주장 잡아야함
+                touch(85, 668)  --출정 버튼
+                state = 23
               else
                 touch(94, 1080)
                 state = 5
@@ -229,10 +253,22 @@ while true do
             if getColor(476, 882) == 11045167 then  --enchant boost window
                 restartTime[targetNum] = os.time() + 900  --wait for 15 minute
                 writeFile(targetNum)
-                --★
+                
                 now = os.date("*t", os.time())
                 hh = now["hour"]
-                if corpMode[targetNum] == true and hh ~= lastCorpTime[targetNum] then
+                dd = now["day"]
+                if hh == 20 and dd ~= lastHwangsungDay[targetNum] then
+                  touch(412, 913)
+                  sleepSec(0.5)
+                  touch(605,970)
+                  sleepSec(0.5)
+                  touch(592, 956)
+                  sleepSec(0.2)
+                  lastHwangsungDay[targetNum] = dd
+                  writeFile(targetNum)
+                  state = 19
+
+                elseif corpMode[targetNum] == true and  (hh % 2 == 1) and hh ~= lastCorpTime[targetNum] then
                   touch(412, 913)
                   sleepSec(0.5)
                   touch(605,970)
@@ -313,8 +349,9 @@ while true do
             lastCorpTime[targetNum] = hh
             writeFile(targetNum)
             break
-          elseif getColor(210, 433) == 7701540 then
-            touch(213, 685) --일단은 테스트용, 두건덕 좌표
+          elseif getColor(210, 433) == 7701540 or getColor(210,433) == 4409649 then
+            touchCorp(corpTarget[targetNum])
+            --touch(213, 685) --일단은 테스트용, 두건덕 좌표
             state = 15
           end
           sleepSec(smWaitTime)
@@ -348,7 +385,98 @@ while true do
             touch(32, 865)
             state = 14
           end
-          sleepSec(smWaitTime)        
+          sleepSec(smWaitTime)
+        elseif state == 19 then --기능 버튼이 보이면 이벤트 버튼 클릭
+          if getColor(94, 1080) == 16773152 then --기능 버튼
+            touch(209, 40)
+            state = 20
+          end
+          sleepSec(smWaitTime)
+        elseif state == 20 then --황성버튼이 보이면 클릭
+          if getColor(415, 719) == 9379111 then --황성버튼
+            touch(415, 719)
+            state = 21
+          end
+          sleepSec(smWaitTime)
+        elseif state == 21 then --함락버튼이 보이면 클릭
+          if getColor(122, 852) == 9603226 then --황성버튼
+            touch(122, 852)
+            state = 22
+          end
+          sleepSec(smWaitTime)
+        elseif state == 22 then --황성 입장, 공격버튼 누른 후 앱 종료
+          if getColor(90, 950) == 16710905 then
+            touch(90, 950)
+            sleepSec(1.0)
+            break
+          end
+          sleepSec(smWaitTime)
+        elseif state == 23 then -- 주장 잡아야 해서 출정 버튼 누름
+          sleepSec(0.8)
+          if getColor(78, 28) == 15394686 then --좌측 화살표가 있을 경우 누른 후 대기
+            touch(71, 18)
+          else  --기다려도 좌측 화살표가 안나옴
+            touch(74, 772)     --주성 한번 갔다가 다시 돌아올것.
+            sleepSec(0.5)
+            touch(85, 668)
+            sleepSec(0.5)
+            currentJJCount = 1
+            mapColor = 0
+            dragCount = 1
+            state = 24
+          end
+          sleepSec(smWaitTime)
+        elseif state == 24 then --주장 잡기1 - 맵 변화 감지 / 버튼 클릭
+          if currentJJCount > tableLength(targetPosition) then
+            now = os.date("*t", os.time())
+            dd = now["day"]
+            lastJujangDay[targetNum] = dd
+            writeFile(targetNum)
+            break
+          end
+          
+          tC = getColor(440, 200)
+          if mapColor ~= tC then
+            mapColor = tC
+            
+            if targetPosition[currentJJCount].z == 1 then
+              Drag(dragCount)
+              dragCount = dragCount + 1
+            end
+            
+            touch(targetPosition[currentJJCount].x, targetPosition[currentJJCount].y)
+            
+            state = 25
+          end
+          sleepSec(smWaitTime)
+        elseif state == 25 then --주장잡기2 - 공격 버튼
+          if getColor(138, 834) == 0x006fd8 then
+            touch(138, 834)
+            state = 26
+          end
+          sleepSec(smWaitTime)
+        elseif state == 26 then --주장잡기3 - 전투중 화면
+          if getColor(600, 686) == 0x4F0000 then
+            touch(600, 686)
+            state = 27
+          end
+          sleepSec(smWaitTime)
+        elseif state == 27 then --주장잡기3 - 전투완료
+          if getColor(60, 846) == 0x8BE401 then
+            touch(60, 846)
+            state = 28
+            sleepSec(0.1)
+            mapColor = getColor(440, 200)
+          end
+          sleepSec(smWaitTime)
+        elseif state == 28 then --주장잡기3 - 다음 맵으로
+          if getColor(88, 420) == 16250768 then
+            touch(88, 420)
+            state = 24
+            currentJJCount = currentJJCount + 1
+            sleepSec(0.5)
+          end
+          sleepSec(smWaitTime)
         else
             break
         end

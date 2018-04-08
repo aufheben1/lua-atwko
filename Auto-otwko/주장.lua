@@ -1,38 +1,14 @@
+SCREEN_RESOLUTION="320x568"
 
-function tableLength(T)
-    local count = 0
-    if T == nil then return count end
-    for _ in pairs(T) do count = count + 1 end
-    return count
-end
 
-function sleepSec(t)
-    usleep(t * 1000000)
-end
-
-function touch(x,y)
-    touchDown(0, x, y)
-    sleepSec(0.03)
-    touchUp(0, x, y)
-end
-
-function touchServer(serverIndex)
-  local touchList = {{420, 390}, {420, 672}, {354, 390}, {354,672}}
-  touch(touchList[serverIndex][1], touchList[serverIndex][2]) 
-end
-
-function touchTag(itemType)
-  local touchList = {{24, 336}, {24, 450}, {24, 584}, {24, 722}, {24, 824}, {24, 940}}
-  touch(touchList[itemType][1], touchList[itemType][2])
-end
-
-function touchItem(itemIndex)
-  local touchList = {{156, 246}, {156, 388}, {156, 512}, {156, 654}, {156, 792}, {156, 920}}
-  touch(touchList[itemIndex][1], touchList[itemIndex][2])
+function ggetColor(x,y)
+    return getColor(x*2, y*2)
 end
 
 
-targetPosition = {{x = 111, y = 220, z = 0}, {x = 138, y = 518, z = 0},{x = 149, y = 439, z = 1}, 	--동탁
+serarchDelay = 500;
+
+local targetPosition = {{x = 111, y = 220, z = 0}, {x = 138, y = 518, z = 0},{x = 149, y = 439, z = 1}, 	--동탁
 						{x = 214, y = 464, z = 0}, {x = 223, y = 162, z = 0}, {x = 150, y = 318, z = 0}, 	--원술
 						{x = 115, y = 333, z = 0}, {x = 92, y = 90, z = 0}, {x = 204, y = 180, z = 1}, 		--이엄
 						{x = 160, y = 326, z = 1}, {x = 327, y = 339, z = 0}, {x = 145, y = 193, z = 0}, 	--유대
@@ -54,29 +30,40 @@ targetPosition = {{x = 111, y = 220, z = 0}, {x = 138, y = 518, z = 0},{x = 149,
   						--{x = 436, y = 141, z = 0}
 						};
 --{x,y, 드래깅 여부}
-dragBuffer = {{x1 = 105, y1 = 309, x2 = 260, y2 = 286}, {x1 = 196, y1 = 306, x2 = 95, y2 = 377},	--이엄
+local dragBuffer = {{x1 = 105, y1 = 309, x2 = 260, y2 = 286}, {x1 = 196, y1 = 306, x2 = 95, y2 = 377},	--이엄
 					{x1 = 115, y1 = 409, x2 = 218, y2 = 299}, {x1 = 212, y1 = 228, x2 = 56, y2 = 452}, 	--엄백호
 					{x1 = 123, y1 = 434, x2 = 241, y2 = 304}, {x1 = 198, y1 = 298, x2 = 65, y2 = 381},	--정원
 					{x1 = 125, y1 = 434, x2 = 250, y2 = 341}, {x1 = 207, y1 = 385, x2 = 45, y2 = 404},	--정보
   					{x1 = 118, y1 = 436, x2 = 215, y2 = 436}, {x1 = 215, y1 = 436, x2 = 118, y2 = 436}	--이궤
 					};
-          
-local l = tableLength(targetPosition)
-for i = 1, l do
-  targetPosition[i].x = targetPosition[i].x * 2
-  targetPosition[i].y = targetPosition[i].y * 2
+--{최초x, 최초y, ~~~};
+
+function TouchColor(x, y, color)
+	while true do
+		local rgb = ggetColor(x, y);
+		if (rgb == color) then
+			touchDown(0, x, y);
+			usleep(30000);
+			touchUp(0, x, y);
+			return;
+		end
+		usleep(serarchDelay);
+	end
 end
 
-l = tableLength(dragBuffer)
-for i = 1, l do
-  dragBuffer[i].x1 = dragBuffer[i].x1 * 2
-  dragBuffer[i].x2 = dragBuffer[i].x2 * 2
-  dragBuffer[i].y1 = dragBuffer[i].y1 * 2
-  dragBuffer[i].y2 = dragBuffer[i].y2 * 2
+function WaitForMapChange()
+	while true do
+		tC = ggetColor(220, 100);
+		if mapColor ~= tC then
+			mapColor = tC;
+			return;
+		end
+		usleep(serarchDelay);
+	end
 end
 
 function Drag(count)
-  x1 = dragBuffer[count].x1;
+	x1 = dragBuffer[count].x1;
 	x2 = dragBuffer[count].x2;
 	y1 = dragBuffer[count].y1;
 	y2 = dragBuffer[count].y2;
@@ -91,5 +78,50 @@ function Drag(count)
 	end
 	touchUp(1, x2, y2);
 	usleep(200000);
-	mapColor = getColor(440, 200);
+	mapColor = ggetColor(220, 100);
 end
+
+local dragCount = 1;
+local mapColor = 0;
+
+for i, v in ipairs(targetPosition) do
+	WaitForMapChange();
+	usleep(serarchDelay);
+	
+	if (v.z == 1) then
+		Drag(dragCount);
+		dragCount = dragCount + 1;
+	end
+	
+	--버튼클릭
+	touchDown(0, v.x, v.y);
+	usleep(30000);
+	touchUp(0,v.x, v.y);
+	
+	usleep(30000);
+	
+	--[[
+	--창닫기
+	TouchColor(306, 468, 920066);
+	usleep(30000);
+	]]--
+	
+	--공격버튼
+	TouchColor(69, 417, 0x006fd8);
+	usleep(30000);
+
+	--전투중화면
+	TouchColor(300, 343, 0x4F0000);		
+	usleep(30000);
+	
+	--전투완료
+	TouchColor(30, 423, 0x8BE401);
+	usleep(80000);
+	
+  	mapColor = ggetColor(220, 100);
+  	
+	--다음맵으로
+	TouchColor(44, 210, 16250768);
+	usleep(500000);
+end
+
