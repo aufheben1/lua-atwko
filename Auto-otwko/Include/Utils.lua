@@ -43,6 +43,67 @@ function isCorpTime(tType, hour)
   end
 end
 
+function getTime(code)
+	now = os.date("*t", os.time())
+	return now[code]
+end
+
+function findTargetAgent(agent)
+	hour = getTime("hour")
+	min = getTime("min")
+
+	--[[
+	-- 황성 시간이 가까웠을 경우 접속제한
+	if hour == 19 and min == 58 then
+		return -1, -1
+	end
+	if hour == 19 and min == 59 then
+		return 1, "황성첫타"
+	end
+	-- TODO: 황성 첫타 이후 다른 계정들 첫타용 접속
+	-- TODO: 다른 계정들 첫타 완료 후 메인계정 황성자동
+	]]--
+
+	--TODO:: if 군단이벤 중 and 군단 리세시간 근처일 경우 군단용 접속
+	--TODO:: if 황성시간 가까울 경우 황성 첫타용 접속
+
+	size = tableLength(agent)
+	minRemainTime = 9999999
+	-- 기본모드 강화 (mode = 1)
+	for i = 1, size do
+		-- 최저 시간 체크해서 일정 시간 이하 남았을 경우 mode 2 이하는 아예 접속 제한
+		if restartTime[i] - os.time() < minRemainTime then
+			minRemainTime = restartTime[i] - os.time()
+		end
+
+		if agent.mode == 1 and restartTime[i] < os.time() then
+			return i, "강화"
+		end
+	end
+
+	-- 심플모드 강화 (mode = 2)
+	for i = 1, size do
+		if agent[i].mode == 2 then
+			--강화를 위한 접속
+			--
+			-- agent 정보에 강화를 위한 카운터를 따로 넣는 것은?
+		end
+	end
+
+	-- 
+
+
+	--기본: 강화를 해야할 시간
+	--추가: 강화 10번만 하면 되는 친구, 강화 안할 친구
+		-- 이 경우 추가로 해야할 일들
+		-- 기본 수령 (주성에서)
+		-- 주장
+		-- 탐방도 할지?
+		-- 
+	-- 추가: 황성 첫타 및 황성 레이스
+	return -1, -1
+end
+
 
 targetPosition = {{x = 111, y = 220, z = 0}, {x = 138, y = 518, z = 0},{x = 149, y = 439, z = 1}, 	--동탁
 						{x = 214, y = 464, z = 0}, {x = 223, y = 162, z = 0}, {x = 150, y = 318, z = 0}, 	--원술

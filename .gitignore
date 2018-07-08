@@ -39,3 +39,6 @@ luac.out
 *.x86_64
 *.hex
 
+Auto-otwko/.vs/slnx.sqlite
+Auto-otwko/.vs/VSWorkspaceState.json
+Auto-otwko/.vs/ProjectSettings.json
