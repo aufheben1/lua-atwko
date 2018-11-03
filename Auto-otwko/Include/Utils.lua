@@ -1,9 +1,18 @@
 
 function tableLength(T)
-    local count = 0
-    if T == nil then return count end
-    for _ in pairs(T) do count = count + 1 end
-    return count
+	local count = 0
+	if T == nil then return count end
+	for _ in pairs(T) do count = count + 1 end
+	return count
+end
+
+function checkScreen(T)
+	for key, item in pairs(T) do
+		if getColor(item.x, item.y) == item.color then
+			return false
+		end
+	end
+	return true
 end
 
 function sleepSec(t)
@@ -11,9 +20,10 @@ function sleepSec(t)
 end
 
 function touch(x,y)
-    touchDown(0, x, y)
-    sleepSec(0.03)
-    touchUp(0, x, y)
+	local id = math.random(100)
+	touchDown(id, x, y)
+	sleepSec(0.03)
+	touchUp(id, x, y)
 end
 
 function touchServer(serverIndex)
