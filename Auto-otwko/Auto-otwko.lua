@@ -7,7 +7,6 @@ dofile(rootDir() .. "Include/Utils.lua")
 smWaitTime = 0.2
 
 --Initialize
-curDay = getTime("day")
 targetCount = tableLength(targets)
 restartTime = {}
 lastCubineTime = {}
@@ -15,7 +14,6 @@ lastCorpTime = {}
 lastHwangsungDay = {}
 lastJujangDay = {}
 lastQuestDay = {}
-dailyEnchantCount = {}
 loginedTarget = 0
 targetNum = 0
 
@@ -36,17 +34,18 @@ function writeFile(index)
   file:write(lastCorpTime[index].. "\n")
   file:write(lastHwangsungDay[index].. "\n")
   file:write(lastJujangDay[index] .. " \n")
-  file:write(lastQuestDay[index] .. " \n")
-  file:write(dailyEnchantCount[index])
+  file:write(lastQuestDay[index])
   file:close()
 end
 
 
 function touchCorp(targetNum)
-  local touchList = {{322, 569}, {213, 685}, {152, 851}, {176, 987}, {414, 434}, {411, 257}}
+  local touchList = {{322, 569}, {213, 685}, {152, 851}, {176, 987}, {414, 434}, {411, 257}, {267, 149}, {160, 296}, {75, 414}}
   touch(touchList[targetNum][1], touchList[targetNum][2])
 end
 
+curCorpCount = 1
+maxCorpCount = tableLength(targets[1].corp.target)
 
 for i = 1, targetCount do
   file = io.open(rootDir().."Tmp/"..targets[i].tag..".tmp", "r")
@@ -64,7 +63,6 @@ for i = 1, targetCount do
     lastHwangsungDay[i] = -1
     lastJujangDay[i] = -1
     lastQuestDay[i] = -1
-	dailyEnchantCount[i] = 0
   else
     --파일이 있을경우 읽어옴
     restartTime[i] = tonumber(file:read())
@@ -73,7 +71,6 @@ for i = 1, targetCount do
     lastHwangsungDay[i] = tonumber(file:read())
     lastJujangDay[i] = tonumber(file:read())
     lastQuestDay[i] = tonumber(file:read())
-	dailyEnchantCount[i] = tonumber(file:read())
     file:close()
   end
 end
@@ -87,22 +84,20 @@ dragCount = 1
 --loop
 while true do
 
-  -- 접속해야 할 계정이 있을 때까지 대기
+  --wait until target time
   while true do
-	-- 접속 여부를 판단하는 메인 함수
-	targetNum, mode = findTargetAgent(agent)
-	
-	-- 날짜가 바뀌었을 시 당일 강화회수 카운트 변경
-	if (curDay ~= getTime("day")) then
-		for i = 1, targetCount do
-			log(agent[i].tag .. "enchanted " dailyEnchantCount[i] .. " times yesterday")
-			dailyEnchantCount[i] = 0
-			writeFile(i)
-		end
-	end
+    --find minimum target time
+    minTargetTime = restartTime[1]
+    targetNum = 1
+    for i = 1, targetCount do
+      if restartTime[i] < minTargetTime then
+        minTargetTime = restartTime[i]
+        targetNum = i
+      end
+    end
 
-	if targetNum ~= -1 then
-		break
+    if os.time() > minTargetTime then
+      break
     else
       usleep(1000000) --wait 1 second
     end
@@ -124,6 +119,7 @@ while true do
     end
     stateCount = stateCount + 1	--state가 변경되지 않는 시간을 카운트
     if stateCount > (20/smWaitTime) then        --state doesn't move for 20 sec
+      log("state 변경 안됨")
       restartTime[targetNum] = os.time() + 120  --wait for 2 minute
       writeFile(targetNum)
       break
@@ -131,6 +127,8 @@ while true do
 
     --다른 기기에서 접속했을 시, 15분 대기
     if getColor(544,1006) == 6965814 and getColor(440, 80) ==7428934 and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
+      log(state)
+      log("access from other device")
       restartTime[targetNum] = os.time() + 900 --wait for 15 minute
       writeFile(targetNum)
       break
@@ -263,6 +261,7 @@ while true do
         end
         touchItem(iCount)
         sleepSec(smWaitTime)
+        sleepSec(0.8)
         state = 7
       end
       sleepSec(smWaitTime)
@@ -276,7 +275,6 @@ while true do
       end
       if getColor(476, 882) == 11045167 then  --enchant boost window
         restartTime[targetNum] = os.time() + 900  --wait for 15 minute
-		dailyEnchantCount[targetNum] = dailyEnchantCount[targetNum] + 1
         writeFile(targetNum)
         
         break
@@ -333,6 +331,7 @@ while true do
       sleepSec(smWaitTime)
     elseif state == 12 then --다시 기능창 누르고 군단전으로
       if getColor(94, 1080) == 16773152 then --option button
+        curCorpCount = 1
         touch(94, 1080)
         state = 13
       end
@@ -353,7 +352,7 @@ while true do
         writeFile(targetNum)
         break
       elseif getColor(210, 433) == 7701540 or getColor(210,433) == 4409649 then
-        touchCorp(targets[targetNum].corp.target)
+        touchCorp(targets[targetNum].corp.target[curCorpCount])
         --touch(213, 685) --일단은 테스트용, 두건덕 좌표
         state = 15
       end
@@ -369,11 +368,22 @@ while true do
         touch(122, 888)
         state = 17
       elseif getColor(438, 920) == 65792 then
-        now = os.date("*t", os.time())
-        hh = now["hour"]
-        lastCorpTime[targetNum] = hh
-        writeFile(targetNum)
-        break
+        curCorpCount = curCorpCount + 1
+        if curCorpCount > maxCorpCount then
+        	now = os.date("*t", os.time())
+        	hh = now["hour"]
+        	lastCorpTime[targetNum] = hh
+          	curCorpCount = 1
+        	writeFile(targetNum)
+        	break
+        else
+          touch(455, 918)
+          sleepSec(0.2)
+          touch(594, 962)
+          sleepSec(0.2)
+          state = 14
+          corpTryCount = 0
+        end
       end
       sleepSec(smWaitTime)        
     elseif state == 17 then --결과 버튼 누르기, 군단 카운트 증가
@@ -384,7 +394,8 @@ while true do
       end
       sleepSec(smWaitTime)     
     elseif state == 18 then --돌아가기 버튼 누르기, 상태는 14번으로
-      if getColor(32, 865) == 9225796 then
+      --if getColor(32, 865) == 9225796 then
+      if getColor(32, 865) == 3158064 then
         touch(32, 865)
         state = 14
       end
@@ -459,13 +470,13 @@ while true do
       end
       sleepSec(smWaitTime)
     elseif state == 26 then --주장잡기3 - 전투중 화면
-      if getColor(600, 686) == 0x4F0000 then
+      if getColor(600, 686) == 5177344 then
         touch(600, 686)
         state = 27
       end
       sleepSec(smWaitTime)
     elseif state == 27 then --주장잡기3 - 전투완료
-      if getColor(60, 846) == 0x8BE401 then
+      if getColor(60, 846) == 2512643 then
         touch(60, 846)
         state = 28
         sleepSec(0.1)
