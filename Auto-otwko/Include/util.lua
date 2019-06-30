@@ -6,13 +6,20 @@ function tableLength(T)
 	return count
 end
 
-function checkScreen(T)
-	for key, item in pairs(T) do
-		if getColor(item.x, item.y) == item.color then
+function checkScreen(name)
+  log(name)
+  for key, item in pairs(color_code[name]) do
+		if getColor(item.x, item.y) ~= item.color then
 			return false
 		end
 	end
 	return true
+end
+
+function touchName(name)
+  local x = button_list[name].x
+  local y = button_list[name].y
+  touch(x, y)
 end
 
 function sleepSec(t)
@@ -20,7 +27,7 @@ function sleepSec(t)
 end
 
 function touch(x,y)
-	local id = math.random(100)
+	local id = math.random(20)
 	touchDown(id, x, y)
 	sleepSec(0.03)
 	touchUp(id, x, y)

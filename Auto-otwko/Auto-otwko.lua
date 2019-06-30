@@ -1,8 +1,9 @@
 adaptResolution(640, 1136);
 adaptOrientation(ORIENTATION_TYPE.PORTRAIT);
 
-dofile(rootDir() .. "Include/Setting.lua")
-dofile(rootDir() .. "Include/Utils.lua")
+dofile(rootDir() .. "include/Setting.lua")
+dofile(rootDir() .. "include/Utils.lua")
+dofile(rootDir() .. "include/color_code_5s.lua")
 
 smWaitTime = 0.2
 
@@ -119,22 +120,19 @@ while true do
     end
     stateCount = stateCount + 1	--state가 변경되지 않는 시간을 카운트
     if stateCount > (20/smWaitTime) then        --state doesn't move for 20 sec
-      log("state 변경 안됨")
       restartTime[targetNum] = os.time() + 120  --wait for 2 minute
       writeFile(targetNum)
       break
     end
 
     --다른 기기에서 접속했을 시, 15분 대기
-    if getColor(544,1006) == 6965814 and getColor(440, 80) ==7428934 and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
-      log(state)
-      log("access from other device")
+    if checkScreen("튕김메인화면") and state ~= 0 and state ~= 4 and state ~= 8 then --access from other device
       restartTime[targetNum] = os.time() + 900 --wait for 15 minute
       writeFile(targetNum)
       break
     end
 
-    if getColor(138,852) == 2973324 then	--출첵!
+    if checkScreen("출첵") then	--출첵!
       sleepSec(1.0)
       touch(138,852)
       sleepSec(4.0)
@@ -147,7 +145,7 @@ while true do
       end
     end
 
-    if getColor(108,866) == 3705129 then	--공지
+    if checkScreen("공지") then	--공지
       sleepSec(1.0)
       touch(118,866)
       sleepSec(4.0)
@@ -162,13 +160,13 @@ while true do
 
     --for state
     if state == 0 then      --웅패 메인화면
-      if getColor(544,1006) == 13668970 and getColor(440, 80) == 14594953 then --check main screen
+      if checkScreen("메인화면") then --check main screen
         touch(582, 164)  --메인화면 내 서버선택 버튼
         state = 1
       end
       sleepSec(smWaitTime)
     elseif state == 1 then  --서버선택 창
-      if getColor(420, 390) == 1118481 then --1 server button
+      if checkScreen("서버선택") then --1 server button
         if targetNum == loginedTarget then	--현재 로그인된 대상이 대상 아이디일 시
           touchServer(targets[targetNum].account.server)
           if fullTime() then  --태학원
@@ -183,9 +181,9 @@ while true do
       end
       sleepSec(smWaitTime)
     elseif state == 2 then  --로그인
-      if getColor(312, 644) == 1009577 then	--누군가 로그인 되어 있을 시
+      if checkScreen("메일등록/로그인") then	--누군가 로그인 되어 있을 시
         touch(312, 644) --로그아웃
-      elseif getColor(308, 518) == 16777215 then	--로그인 된 대상이 없을시
+      elseif checkScreen("메일등록/노로그인") then	--로그인 된 대상이 없을시
         sleepSec(0.3)
         touch(308, 518) --id slot
         sleepSec(1)
@@ -204,7 +202,7 @@ while true do
       sleepSec(smWaitTime)
     elseif state == 3 then  --다시 서버 선택창으로
       --//add function to relogin when login failed
-      if getColor(312, 644) == 1009577 then   --로그인 되었을시
+      if checkScreen("로그인/완료") then   --로그인 되었을시
         touch(504, 372)
         loginedTarget = targetNum
         state = 1
@@ -212,7 +210,7 @@ while true do
       sleepSec(smWaitTime)
     elseif state == 4 then  --게임 접속, 강화창으로 -> 강화창이 아니라, 시간대에 따라 필요한 행동 창으로 이동.
       --//add function to stop when server check
-      if getColor(94, 1080) == 16773152 then --option button
+      if checkScreen("주성") then --option button
         now = os.date("*t", os.time())
         hh = now["hour"]
         dd = now["day"]

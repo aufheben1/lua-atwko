@@ -1,6 +1,7 @@
 
 color_code = {
   ["메인화면"] = {{x = 544, y = 1006, color = 13668970}, {x = 440, y = 80, color = 14594953}},
+  ["튕김메인화면"] = {{x = 544, y = 1006, color = 6965814}, {x = 440, y = 80, color = 7428934}},
   ["서버선택"] = {{x = 420, y = 390, color = 1118481}},
   ["메일등록/로그인"] = {{x = 312, y = 644, color = 1009577}},
   ["메일등록/노로그인"] = {{x = 308, y = 518, color = 16777215}},
@@ -9,7 +10,7 @@ color_code = {
   ["공지"] = {{x = 108, y = 866, color = 3705129}},
   ["주성"] = {{x = 94, y = 1080, color = 16773152}},
   ["기능"] = {{x = 302, y = 726, color = 3642438}},
-  -- TODO: check 기능/군단전 - how state is 12?
+  -- TODO: check 기능/군단전 - how state is 12? -> state 12 is not used
   ["강화"] = {{x = 350, y = 826, color = 6105858}},
   ["강화/가능"] = {{x = 376, y = 814, color = 15518777}},
   ["강화/풀강"] = {{x = 380, y = 659, color = 3450947}},
@@ -45,9 +46,7 @@ button_list = {
 
 -- For test
 function checkScreen(name)
-  log(name .. ": ")
   for key, item in pairs(color_code[name]) do
-    log("         " .. tostring(item.x) .. " " .. tostring(item.y) .. ": " .. tostring(item.color) .. " vs " .. tostring(getColor(item.x, item.y)))
 		if getColor(item.x, item.y) ~= item.color then
 			return false
 		end
